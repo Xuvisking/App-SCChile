@@ -40,7 +40,7 @@ const DismissKeyboard = ({ children }) => (
   <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>{children}</TouchableWithoutFeedback>
 );
 
-class escortRoute extends React.Component {
+class escoltaRoute extends React.Component {
 
   constructor(props)
   {
@@ -48,9 +48,10 @@ class escortRoute extends React.Component {
     this.state = {
       token:'',
       Mod:[],
-      Fecha:'',
+      Fecha: new Date("YYYY-MM-DD HH:mm:ss"),
       Hora:'',
       Dir:'',
+      Detail:'',
       idescolta: 0
     }
   }
@@ -59,6 +60,7 @@ class escortRoute extends React.Component {
     try{
       // const token = await AsyncStorage.getItem('token');
       const usuario = await AsyncStorage.getItem('usuario');
+      const token = await AsyncStorage.getItem('token');
       const url = `${'http://20.121.32.18:4000/Escolta'}/${usuario}`;
       //consulta login vecino
       const response= await fetch(url,{
@@ -66,9 +68,9 @@ class escortRoute extends React.Component {
         mode: 'cors',
         credentials: 'omit',
         referrerPolicy: 'no-referrer',
-        // headers: {
-        //   'x-token': token
-        // }
+        headers: {
+          'x-token': token
+        }
       });
   
       const res= await response.json();
@@ -89,7 +91,7 @@ class escortRoute extends React.Component {
       } else {
         Alert.alert(
           "Estado de la escolta",
-          "La alarma aun no ha sido solicitada",
+          "La escolta aun no ha sido solicitada",
           [
             { text: "Ok", onPress: () => {
                 console.log("OK Pressed");
@@ -111,11 +113,13 @@ class escortRoute extends React.Component {
       //capatar los input
       //const token = await AsyncStorage.getItem('token');
       const usuario = await AsyncStorage.getItem('usuario');
+      const token = await AsyncStorage.getItem('token');
       const{Mod} = this.state;
       const{Fecha} = this.state;
       const{Hora} = this.state;
       const{Dir} = this.state;
-      console.log(usuario,' // ',Fecha,' // ',Hora, ' // ',Dir, '//', Mod.label);
+      const{Detail} = this.state;
+      console.log(usuario,' // ',Detail,' // ',Fecha,' // ',Hora, ' // ',Dir, '//', Mod.label);
   
       //consulta login vecino
       const response= await fetch('http://20.121.32.18:4000/crearEscolta',{
@@ -123,10 +127,11 @@ class escortRoute extends React.Component {
         //headers para contenidos de lo mensje
         headers:{
           //'x-token': token,
+          'x-token': token,
           'Accept':'application/json',
           'Content-type':'application/json'
         },
-        body:JSON.stringify({idvecino:usuario,direccion:Dir,modalidad:Mod.label})
+        body:JSON.stringify({idvecino:usuario,fecha:Fecha,direccion:Dir,modalidad:Mod.label,detalle:Detail})
       });
   
       const res= await response.json();
@@ -136,6 +141,10 @@ class escortRoute extends React.Component {
       console.log(error);
     }
     //enviar todos los datos por pos ya que es un login 
+  }
+
+  NoDisponible = () => {
+    Alert.alert("Aún no disponible")
   }
 
   CrearEscolta = async () =>{
@@ -160,6 +169,103 @@ class escortRoute extends React.Component {
       ],
       { cancelable: false }
     );
+  }
+
+  solicitudCancelarescolta = async (idescolta) =>{
+    console.log(idescolta)
+    try{
+      //capatar los input
+      const usuario = await AsyncStorage.getItem('usuario');
+      const token = await AsyncStorage.getItem('token');
+
+      //consulta login vecino
+      const response= await fetch('http://20.121.32.18:4000/cancelarEscolta',{
+        method:'POST',
+        //headers para contenidos de lo mensje
+        headers:{
+          //'x-token': token,
+          'x-token': token,
+          'Accept':'application/json',
+          'Content-type':'application/json'
+        },
+        body:JSON.stringify({idescolta:idescolta})
+      });
+  
+      const res= await response.json();
+      console.log('Respuesta del servidor:',res)
+      if (res.code === 200) {
+        Alert.alert(
+          "Estado de la escolta",
+          "La escolta ha sido cancelada",
+          [
+            { text: "Ok", onPress: () => {
+                console.log("OK Pressed");
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+      }
+      
+    }catch (error){
+      console.log(error);
+    }
+    //enviar todos los datos por pos ya que es un login 
+  }
+
+  CancelarEscolta = async () =>{
+    try{
+      const usuario = await AsyncStorage.getItem('usuario');
+      const token = await AsyncStorage.getItem('token');
+      const url = `${'http://20.121.32.18:4000/Escolta'}/${usuario}`;
+      //consulta login vecino
+      const response= await fetch(url,{
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        headers: {
+          'x-token': token
+        }
+      });
+  
+      const res= await response.json();
+      //console.log('Respuesta del servidor:',res)
+      if (res.code === 200) {
+        const largores = res.rows.rows.length
+        if (res.rows.rows[largores-1].estado === "activa") {
+          this.solicitudCancelarescolta(res.rows.rows[largores-1].idescolta);
+        } else {
+          Alert.alert(
+            "Estado de la escolta",
+            "La escolta aun no ha sido solicitada",
+            [
+              { text: "Ok", onPress: () => {
+                  console.log("OK Pressed");
+                }
+              }
+            ],
+            { cancelable: false }
+          );
+        }
+      } else {
+        Alert.alert(
+          "Estado de la escolta",
+          "La escolta aun no ha sido solicitada",
+          [
+            { text: "Ok", onPress: () => {
+                console.log("OK Pressed");
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+      }
+      
+    }catch (error){
+      console.log(error);
+    }
+    //enviar todos los datos por pos ya que es un login 
   }
 
   render() {
@@ -210,7 +316,7 @@ class escortRoute extends React.Component {
                             selectedBtn={Mod => this.setState({Mod})}
                           />
                           </Block>
-                            {/* <Text
+                            <Text
                                 style={{
                                     fontFamily: 'montserrat-regular',
                                     textAlign: 'left'
@@ -222,7 +328,7 @@ class escortRoute extends React.Component {
                             </Text>
                           <Block width={width * 0.8} style={{ marginBottom: 5 }}>
                             <Input
-                              placeholder="DD/MM/AAAA"
+                              placeholder="AAAA-MM-DD HH:MM:SS"
                               style={styles.inputs}
                               onChangeText={Fecha => this.setState({Fecha})}
                               iconContent={
@@ -236,7 +342,7 @@ class escortRoute extends React.Component {
                               }
                             />
                           </Block>
-                          <Text
+                          {/* <Text
                                 style={{
                                     fontFamily: 'montserrat-regular',
                                     textAlign: 'left'
@@ -291,7 +397,35 @@ class escortRoute extends React.Component {
                                   }
                                 />
                               </Block>
-                            </Block>  
+                              <Text
+                                    style={{
+                                        fontFamily: 'montserrat-regular',
+                                        textAlign: 'left'
+                                      }}
+                                      color="#333"
+                                      size={15}
+                                >
+                                    Detalles del vehículo
+                                </Text>  
+                              
+                              <Block width={width * 0.8} style={{ marginBottom: 5 }}>
+                                <Input
+                                  placeholder="Ej: Color, patente, marca o modelo"
+                                  style={styles.inputs}
+                                  onChangeText={Detail => this.setState({Detail})}
+                                  iconContent={
+                                    <Icon
+                                      size={16}
+                                      color="#ADB5BD"
+                                      name="world2x"
+                                      family="NowExtra"
+                                      style={styles.inputIcons}
+                                    />
+                                  }
+                                />
+                              </Block>
+                            </Block> 
+                            
                          ) : (
                            <Text></Text>
                          ) }
@@ -305,6 +439,30 @@ class escortRoute extends React.Component {
                               color={nowTheme.COLORS.WHITE}
                             >
                               Solicitar Escolta
+                            </Text>
+                          </Button>
+                        </Block>
+                        <Block center>
+                          <Button color="primary" round style={styles.createButton}>
+                            <Text
+                              style={{ fontFamily: 'montserrat-bold' }}
+                              size={14}
+                              onPress={this.CancelarEscolta}
+                              color={nowTheme.COLORS.WHITE}
+                            >
+                              Cancelar escolta
+                            </Text>
+                          </Button>
+                        </Block>
+                        <Block center>
+                          <Button color="primary" round style={styles.createButton}>
+                            <Text
+                              style={{ fontFamily: 'montserrat-bold' }}
+                              size={14}
+                              onPress={this.NoDisponible}
+                              color={nowTheme.COLORS.WHITE}
+                            >
+                              Enviar ubicación
                             </Text>
                           </Button>
                         </Block>
@@ -348,8 +506,9 @@ const styles = StyleSheet.create({
   },
   registerContainer: {
     marginTop: 55,
+    marginBottom: 80,
     width: width * 0.9,
-    height: 800,
+    height: 1100,
     backgroundColor: nowTheme.COLORS.WHITE,
     borderRadius: 4,
     shadowColor: nowTheme.COLORS.BLACK,
@@ -413,7 +572,7 @@ const styles = StyleSheet.create({
   }
 });
 
-export default escortRoute;
+export default escoltaRoute;
 
 // import React, { useState, useEffect, Component } from 'react';
 // import { render } from 'react-dom';

@@ -21,6 +21,8 @@ import { render } from 'react-dom';
 import {Image, Text, SafeAreaView, TouchableHighlight, Alert} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { Paragraph, Dialog, Portal, Card, List, Button, TextInput } from 'react-native-paper';
+
 import { Images } from '../constants/';
 
 //redux
@@ -46,11 +48,16 @@ class panicbuttonRoute extends Component{
     this.setState({Mensaje:'Hemos recibido su alarma, estamos enviado ayuda...'});
   }
 
+  NoDisponible = () => {
+    Alert.alert("Aún no disponible")
+  }
+
 
   postAlarma = async () =>{
     try{
       //capatar los input
       const usuario = await AsyncStorage.getItem('usuario');
+      const token = await AsyncStorage.getItem('token');
       console.log(usuario);
 
       //crear alarma
@@ -58,6 +65,7 @@ class panicbuttonRoute extends Component{
         method:'POST',
         //headers para contenidos de lo mensje
         headers:{
+          'x-token': token,
           'Accept':'application/json',
           'Content-type':'application/json'
         },
@@ -99,6 +107,102 @@ class panicbuttonRoute extends Component{
       { cancelable: false }
     );
   }
+  solicitudCancelaralarma = async (idalarma) =>{
+    console.log(idalarma)
+    try{
+      //capatar los input
+      const token = await AsyncStorage.getItem('token');
+
+      //consulta login vecino
+      const response= await fetch('http://20.121.32.18:4000/cancelarAlarma',{
+        method:'POST',
+        //headers para contenidos de lo mensje
+        headers:{
+          //'x-token': token,
+          'x-token': token,
+          'Accept':'application/json',
+          'Content-type':'application/json'
+        },
+        body:JSON.stringify({idalarma:idalarma})
+      });
+  
+      const res= await response.json();
+      console.log('Respuesta del servidor:',res)
+      if (res.code === 200) {
+        Alert.alert(
+          "Estado de la alarma",
+          "La alarma ha sido cancelada",
+          [
+            { text: "Ok", onPress: () => {
+                console.log("OK Pressed");
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+      }
+      
+    }catch (error){
+      console.log(error);
+    }
+    //enviar todos los datos por pos ya que es un login 
+  }
+
+  cancelarAlarma = async () => {
+    try{
+      const usuario = await AsyncStorage.getItem('usuario');
+      const token = await AsyncStorage.getItem('token');
+      const url = `${'http://20.121.32.18:4000/Alarma'}/${usuario}`;
+      //consulta login vecino
+      const response= await fetch(url,{
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        headers: {
+          'x-token': token
+        }
+      });
+  
+      const res= await response.json();
+      //console.log('Respuesta del servidor:',res)
+      if (res.code === 200) {
+        const largores = res.rows.rows.length
+        console.log(res)
+        if (res.rows.rows[largores-1].estado === "activa") {
+          this.solicitudCancelaralarma(res.rows.rows[largores-1].idalarma);
+        } else {
+          Alert.alert(
+            "Estado de la alarma",
+            "La alarma aun no ha sido solicitada",
+            [
+              { text: "Ok", onPress: () => {
+                  console.log("OK Pressed");
+                }
+              }
+            ],
+            { cancelable: false }
+          );
+        }
+      } else {
+        Alert.alert(
+          "Estado de la alarma",
+          "La alarma aun no ha sido solicitada",
+          [
+            { text: "Ok", onPress: () => {
+                console.log("OK Pressed");
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+      }
+      
+    }catch (error){
+      console.log(error);
+    }
+    //enviar todos los datos por pos ya que es un login 
+  }
     
   render(){
     
@@ -115,10 +219,23 @@ class panicbuttonRoute extends Component{
         
     }
     return(
-        <SafeAreaView style={{flex: 1, backgroundColor:'white', paddingTop: 50, alignItems: 'center', justifyContent:'center'}}>
+        <SafeAreaView style={{flex: 1, backgroundColor:'white', justifyContent:'center'}}>
+          <Card style={{ paddingTop: 50, alignItems: 'center', justifyContent:'center'}}>
             <TouchableHighlight onPress={() => buttonClickedHandler()}>
                 <Image style={{width: 350, height: 350}} source={Images.sos} />
             </TouchableHighlight>
+          </Card>
+          <Card  style={{alignItems: 'center', justifyContent:'center'}}>
+            <Button icon="cancel" mode="contained" onPress={() => this.cancelarAlarma()}>
+              Cancelar alarma
+            </Button>
+          </Card>
+          <Card  style={{paddingTop: 10,alignItems: 'center', justifyContent:'center'}}>
+
+            <Button  icon ="map-marker" mode="contained" onPress={() => this.NoDisponible()}>
+              Enviar ubicación
+            </Button>
+          </Card>
         </SafeAreaView>
     );
   }

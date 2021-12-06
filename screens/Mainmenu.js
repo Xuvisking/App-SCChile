@@ -3,20 +3,20 @@ import { BottomNavigation, Text } from 'react-native-paper';
 
 //screen
 import panicbuttonRoute from './Panicbutton';
-import escortRoute from './Escort';
+import escoltaRoute from './Escolta';
 import contactRoute from './Contact';
 
 const Mainmenu = () => {
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
     { key: 'panicbutton', title: 'Botón', icon: 'alert' },
-    { key: 'escort', title: 'Escolta', icon: 'car-side' },
+    { key: 'escolta', title: 'Escolta', icon: 'car-side' },
     { key: 'contact', title: 'Contactos', icon: 'contacts' },
   ]);
 
   const renderScene = BottomNavigation.SceneMap({
     panicbutton: panicbuttonRoute,
-    escort: escortRoute,
+    escolta: escoltaRoute,
     contact: contactRoute,
   });
 

@@ -45,6 +45,7 @@ const contactRoute = () => {
       console.log(list.length); 
       //setList(list.length = 0)
       const usuario = await AsyncStorage.getItem('usuario');
+      const token = await AsyncStorage.getItem('token');
             //Tomar el valor de id desde asycstorage
             //consultar Datos del vecino
             const url = `${'http://20.121.32.18:4000/contacto'}/${usuario}`;
@@ -52,6 +53,7 @@ const contactRoute = () => {
               method:'GET',
               //headers para contenidos de lo mensje
               headers:{
+                'x-token': token,
                 'Accept':'application/json',
                 'Content-type':'application/json'
               }
@@ -59,6 +61,7 @@ const contactRoute = () => {
       
             const infoContacto= await response.json();
             //console.log('respues servidor',infoContacto);
+            
             for (let index = 0; index < infoContacto.rows.rows.length; index++) {
               list.push( 
                 {                 
@@ -94,10 +97,12 @@ const contactRoute = () => {
   const changeData = async (type, text) => {
       try{
         if (type === "contacto") {
+          const token = await AsyncStorage.getItem('token');
           const response= await fetch('http://20.121.32.18:4000/contacto/actualizar',{
             method:'POST',
             //headers para contenidos de lo mensje
             headers:{
+              'x-token': token,
               'Accept':'application/json',
               'Content-type':'application/json'
             },
@@ -132,10 +137,12 @@ const contactRoute = () => {
           }
 
         } else if (type === "telefono") {
+          const token = await AsyncStorage.getItem('token');
           const response= await fetch('http://20.121.32.18:4000/contacto/actualizar',{
             method:'POST',
             //headers para contenidos de lo mensje
             headers:{
+              'x-token': token,
               'Accept':'application/json',
               'Content-type':'application/json'
             },
